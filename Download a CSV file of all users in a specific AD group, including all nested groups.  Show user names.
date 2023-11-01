@@ -1,0 +1,39 @@
+# Import the Active Directory module if not already loaded
+if (-not (Get-Module -Name ActiveDirectory)) {
+    Import-Module ActiveDirectory
+}
+
+# Define the AD group you want to query
+$targetGroupName = "YourGroupName"  # Replace with the name of the AD group
+
+# Initialize an array to store user information
+$userInfo = @()
+
+# Define a function to recursively get users from groups
+function Get-UsersFromGroup {
+    param (
+        [string]$GroupName
+    )
+
+    $group = Get-ADGroup $GroupName -Properties Members
+
+    foreach ($member in $group.Members) {
+        if ($member.objectClass -eq "user") {
+            $user = Get-ADUser $member
+            $userInfo += [PSCustomObject]@{
+                UserName = $user.Name
+            }
+        } elseif ($member.objectClass -eq "group") {
+            Get-UsersFromGroup -GroupName $member.Name
+        }
+    }
+}
+
+# Get users from the specified group and its nested groups
+Get-UsersFromGroup -GroupName $targetGroupName
+
+# Output the list of user names to a CSV file
+$userInfo | Export-CSV -Path "UserList.csv" -NoTypeInformation
+
+# Display the list of user names
+$userInfo | Format-Table -AutoSize
