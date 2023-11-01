@@ -1,0 +1,24 @@
+# Import the Active Directory module if not already loaded
+if (-not (Get-Module -Name ActiveDirectory)) {
+    Import-Module ActiveDirectory
+}
+
+# Get a list of all AD groups
+$groups = Get-ADGroup -Filter * -Properties Members
+
+# Initialize an array to store the group information
+$groupInfo = @()
+
+# Iterate through each group and retrieve its name and membership count
+foreach ($group in $groups) {
+    $groupInfo += [PSCustomObject]@{
+        Name = $group.Name
+        MemberCount = $group.Members.Count
+    }
+}
+
+# Output the list of group names and membership counts to a CSV file
+$groupInfo | Export-CSV -Path "GroupInfo.csv" -NoTypeInformation
+
+# Display the list of group names and membership counts
+$groupInfo | Format-Table -AutoSize
