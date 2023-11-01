@@ -1,0 +1,40 @@
+# Define a function to recursively calculate the total member count
+function Get-TotalMemberCount {
+    param (
+        [string]$GroupName
+    )
+
+    $group = Get-ADGroup $GroupName -Properties Members
+    $directMembersCount = $group.Members.Count
+
+    $nestedMembersCount = 0
+
+    foreach ($member in $group.Members) {
+        if ($member.objectClass -eq "group") {
+            $nestedMembersCount += Get-TotalMemberCount $member
+        }
+    }
+
+    return $directMembersCount + $nestedMembersCount
+}
+
+# Get a list of all AD groups
+$groups = Get-ADGroup -Filter * -Properties Members
+
+# Initialize an array to store the group information
+$groupInfo = @()
+
+# Iterate through each group and retrieve its name and total membership count
+foreach ($group in $groups) {
+    $totalMemberCount = Get-TotalMemberCount -GroupName $group.Name
+    $groupInfo += [PSCustomObject]@{
+        Name = $group.Name
+        TotalMemberCount = $totalMemberCount
+    }
+}
+
+# Output the list of group names and total membership counts to a CSV file
+$groupInfo | Export-CSV -Path "GroupInfo.csv" -NoTypeInformation
+
+# Display the list of group names and total membership counts
+$groupInfo | Format-Table -AutoSize
