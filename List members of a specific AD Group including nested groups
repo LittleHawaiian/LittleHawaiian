@@ -1,0 +1,27 @@
+# Prompt the user to enter the name of the Active Directory group
+$groupName = Read-Host "Enter the name of the AD group"
+
+# Get the members of the specified group and nested members
+$members = Get-ADGroupMember -Identity $groupName -Recursive
+
+if ($members.Count -eq 0) {
+    Write-Host "No members found for the group: $groupName"
+} else {
+    # Display the display name, first name, and last name of all members, including nested groups
+    $result = $members | ForEach-Object {
+        $user = Get-ADUser $_ -Properties DisplayName, GivenName, Surname
+        [PSCustomObject]@{
+            "Display Name" = $user.DisplayName
+            "First Name" = $user.GivenName
+            "Last Name" = $user.Surname
+            "SamAccountName" = $_.SamAccountName
+        }
+    }
+
+    # Display the results on the screen
+    $result | Format-Table -AutoSize
+
+    # Save the results to a CSV file
+    $result | Export-Csv -Path "C:\powershell_reporting\$groupName.csv" -NoTypeInformation
+    Write-Host "CSV file saved to C:\powershell_reporting\$groupName.csv"
+}
