@@ -1,0 +1,13 @@
+# Prompt the user to enter the search term
+$searchTerm = Read-Host "Enter the AD Group Name"
+
+# Search for groups with a name containing the search term
+$foundGroups = Get-ADGroup -Filter * -Properties Description, info | Where-Object { $_.Name -like "*$searchTerm*" }
+
+if ($foundGroups.Count -eq 0) {
+    Write-Host "No groups containing '$searchTerm' found."
+} else {
+    $foundGroups |
+        Select-Object Name, samaccountname, Description, info |
+        Sort-Object Name
+}
