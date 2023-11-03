@@ -1,0 +1,31 @@
+function Get-NestedGroupMemberCount($Group) {
+    $count = 0
+
+    $directMembers = Get-ADGroupMember -Identity $Group
+
+    foreach ($member in $directMembers) {
+        if ($member.objectClass -eq 'group') {
+            # If the member is a group, recursively count its members
+            $count += Get-NestedGroupMemberCount $member
+        } else {
+            # If the member is a user or other object, increment the count by 1
+            $count++
+        }
+    }
+
+    return $count
+}
+
+# Prompt for the name of the group
+$groupName = Read-Host "Enter the name of the AD group"
+
+# Get the specified group
+$group = Get-ADGroup -Filter { Name -eq $groupName }
+
+if ($group) {
+    $groupCount = Get-NestedGroupMemberCount $group
+
+    Write-Host "Total number of members in group $groupName and nested groups is: $groupCount"
+} else {
+    Write-Host "Group $groupName not found."
+}
